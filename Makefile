@@ -5,8 +5,12 @@
 
 include Make.conf
 
-CC	= gcc 
+CC	= zig cc
 CFLAGS  = -O2 -Wall -D_GNU_SOURCE
+CFLAGS += `pkgconf --cflags --libs libpng`
+CFLAGS += `pkgconf --cflags --libs libjpeg`
+CFLAGS += -lgif
+#-I/usr/include/libpng16 -lpng16
 
 SOURCES	= main.c jpeg.c gif.c png.c bmp.c fb_display.c transforms.c
 OBJECTS	= ${SOURCES:.c=.o}
@@ -18,7 +22,7 @@ all: $(OUT)
 	@echo Build DONE.
 
 $(OUT): $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(OUT) $(OBJECTS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(OUT) $(OBJECTS) $(LIBS)
 
 clean:
 	rm -f $(OBJECTS) *~ $$$$~* *.bak core config.log $(OUT)

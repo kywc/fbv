@@ -31,12 +31,12 @@
 #include <string.h>
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define gflush return(FH_ERROR_FILE);
-#define grflush { DGifCloseFile(gft); return(FH_ERROR_FORMAT); }
-#define mgrflush { free(lb); free(slb); DGifCloseFile(gft); return(FH_ERROR_FORMAT); }
+#define grflush { DGifCloseFile(gft,&err); return(err); }
+#define mgrflush { free(lb); free(slb); DGifCloseFile(gft,&err); return(err); }
 #define agflush return(FH_ERROR_FORMAT);
-#define agrflush { DGifCloseFile(gft); return(FH_ERROR_FORMAT); }
+#define agrflush { DGifCloseFile(gft,&err); return(err); }
 
-
+// grflush,mgrflush,agrflush formerly returned FH_ERROR_FORMAT = 2
 int fh_gif_id(char *name)
 {
     int fd;
@@ -71,6 +71,7 @@ int fh_gif_load(char *name,unsigned char *buffer, unsigned char ** alpha, int x,
   int transparency=-1;  //-1 means not transparency present
     int px,py,i,ibxs;
     int j;
+    int err=0;
     char *fbptr;
     char *lb;
     char *slb;
@@ -81,8 +82,8 @@ int fh_gif_load(char *name,unsigned char *buffer, unsigned char ** alpha, int x,
     ColorMapObject *cmap;
     int cmaps;
 
-    gft=DGifOpenFileName(name);
-    if(gft==NULL){printf("err5\n"); gflush;} //////////
+    gft=DGifOpenFileName(name, &err);
+    if(gft==NULL){printf("err %d \n", err); gflush;} //////////
     do
     {
 	if(DGifGetRecordType(gft,&rt) == GIF_ERROR) grflush;
@@ -170,7 +171,7 @@ int fh_gif_load(char *name,unsigned char *buffer, unsigned char ** alpha, int x,
 	}
     }
     while( rt!= TERMINATE_RECORD_TYPE );
-    DGifCloseFile(gft);
+    DGifCloseFile(gft,&err);
     return(FH_ERROR_OK);
 }
 
@@ -179,12 +180,13 @@ int fh_gif_load(char *name,unsigned char *buffer, unsigned char ** alpha, int x,
 int fh_gif_getsize(char *name,int *x,int *y)
 {
     int px,py;
+    int err;
     GifFileType *gft;
     GifByteType *extension;
     int extcode;
     GifRecordType rt;
 
-    gft=DGifOpenFileName(name);
+    gft=DGifOpenFileName(name,&err);
     if(gft==NULL) gflush;
     do
     {
@@ -197,7 +199,7 @@ int fh_gif_getsize(char *name,int *x,int *y)
 		px=gft->Image.Width;
 		py=gft->Image.Height;
 		*x=px; *y=py;
-		DGifCloseFile(gft);
+		DGifCloseFile(gft,&err);
 		return(FH_ERROR_OK);
 		break;
 	    case EXTENSION_RECORD_TYPE:
@@ -210,7 +212,7 @@ int fh_gif_getsize(char *name,int *x,int *y)
 	}  
     }
     while( rt!= TERMINATE_RECORD_TYPE );
-    DGifCloseFile(gft);
+    DGifCloseFile(gft,&err);
     return(FH_ERROR_FORMAT);
 }
 #endif
